@@ -2,7 +2,8 @@ import pygame
 import math
 import random
 
-
+# -- Initialise PyGame
+pygame.init()
 
 #--Boarder
 boardermap = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
@@ -56,12 +57,20 @@ boardermap = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
        [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]
 
+BombMap = []
 
 # -- colours
 BLACK = (0,0,0)
 WHITE = (255,255,255)
 BLUE = (50,50,255)
 YELLOW = (255,255,0)
+
+# -- Blank Screen
+size = (1000,1000)
+screen = pygame.display.set_mode(size, pygame.RESIZABLE)
+
+# -- Title of new window/screen
+pygame.display.set_caption("Title TBC")
 
 #-- classes
 
@@ -83,6 +92,7 @@ all_sprites_list = pygame.sprite.Group()
 
 #create a lsit of tiles for bombs, boarder, safesquares
 wall_list = pygame.sprite.Group()
+covertileList = pygame.sprite.Group()
 #bomb_list = pygame.sprite.Group()
 
 #create boarder walls
@@ -94,20 +104,13 @@ for y in range(50):
             all_sprites_list.add(my_wall)
 
 #create the game grid inside the boarder
-for y in range(50):
-    for x in range(50):
-        GameSquare = tile(YELLOW, 19, 19, x*10,y*10)
-        all_sprites_list.add(GameSquare)
-
-# -- Initialise PyGame
-pygame.init()
-
-# -- Blank Screen
-size = (1000,1000)
-screen = pygame.display.set_mode(size, pygame.RESIZABLE)
-
-# -- Title of new window/screen
-pygame.display.set_caption("Title TBC")
+for y in range(1,24):
+    for x in range(1,24):
+        #pygame.draw.rect(screen, YELLOW, (19,19,x*20,x*20))
+        if boardermap[x][y] == 0:
+            covertile = tile(YELLOW, 19,19, x*20, y*20)
+            covertileList.add(covertile)
+            all_sprites_list.add(covertile)
 
 # -- Exit game flag set to false
 done = False
