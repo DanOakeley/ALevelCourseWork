@@ -5,7 +5,6 @@ import random
 # -- Initialise PyGame
 pygame.init()
 
-boardermap = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 #--Map
 # old Key:  9 = bomb, 10 = boarderwall 0 = clear square, 1 = 1 bomb touching, 2 = 2 bombs touching, 3 = 3 bombs touching, etc.
 #new key: 10 - boarder, 0 = clear, 1 = bomb, 2 = exposed bomb, 3 = flag
