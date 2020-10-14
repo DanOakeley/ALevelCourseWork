@@ -103,7 +103,7 @@ Safe_list = pygame.sprite.Group()
 #create boarder walls
 for y in range(50):
     for x in range(50):
-        if boardermap[x][y] == 10:
+        if bombmap[x][y] == 10:
             my_wall = tile(BLUE, 10,10, x*10, y*10)
             wall_list.add(my_wall)
             all_sprites_list.add(my_wall)
@@ -117,8 +117,8 @@ for y in range(50):
 #            all_sprites_list.add(covertile)
 
 #set the bombs
-NoOfBombs = 30
-for NoOfBombs in range(30):
+NoOfBombs = 60
+for NoOfBombs in range(60):
     x = random.randrange(1,48)
     y = random.randrange(1,48)
     if (bombmap[x][y] != 10) and (bombmap[x][y] != 2): #at the moment it says 2 for descovered bomb but in future will be 1 for undescoreverd bomb (just like this for testing)
