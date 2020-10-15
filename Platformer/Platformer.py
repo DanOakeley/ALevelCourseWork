@@ -50,30 +50,34 @@ class Player(pygame.sprite.Sprite):
         self.speed_y = val
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self,color,speed):
-        self.speed = speed
+    def __init__(self,x, y, powerup):
+        self.powerup = powerup
+        if self.powerup == True:
+            self.speed = 10
+        elif self.powerup == False:
+            self.speed = 5
         super().__init__()
         self.image = pygame.Surface([2,2])
-        self.image.fill(color)
+        self.image.fill(WHITE)
         self.rect = self.image.get_rect()
-        self.rect.x = player.rect.x + 20
-        self.rect.y = player.rect.y
-
+        self.rect.x = x
+        self.rect.y = y
     def update(self):
-        self.rect.y = self.rect.y + self.speed
+        self.rect.x = self.rect.x + self.speed
 
 #--lists
-all_sprites_group = pygame.sprite.Group()
-bullet_group = pygame.sprite.Group()
-bullet_hit_group = pygame.sprite.Group()
+all_sprites_list = pygame.sprite.Group()
+bullet_list = pygame.sprite.Group()
+bullet_hit_list = pygame.sprite.Group()
 #--create player
 player = Player(YELLOW,10,10)
-all_sprites_group.add (player)
+all_sprites_list.add (player)
 
 # screenr refresh
 clock = pygame.time.Clock()
 # -- Game Loop
 while not done:
+    powerup = False
     # -- User input and controls
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -87,6 +91,9 @@ while not done:
                 player.player_set_speed_y(-3)
             elif event.key == pygame.K_s:
                 player.player_set_speed_y(3)
+            elif event.key == pygame.K_SPACE: #-create bullet on press
+                bullet = Bullet(player.rect.x, player.rect.y, powerup)
+                bullet_list.add (bullet)
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_a or event.key == pygame.K_d:
                 player.player_set_speed_x(0)
@@ -96,12 +103,14 @@ while not done:
     #nextevent
 
     # -- Game logic goes after this comment
-    all_sprites_group.update()
+    all_sprites_list.update()
+    bullet_list.update()
     # -- Screen background is BLACK
     screen.fill(BLACK)
 
     # -- Draw here
-    all_sprites_group.draw (screen)
+    all_sprites_list.draw (screen)
+    bullet_list.draw (screen)
     # -- flip display to reveal new position of objects
     pygame.display.flip()
 
