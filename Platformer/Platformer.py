@@ -1,4 +1,5 @@
 import pygame
+import random
 # -- Global constants
 
 # -- colours5
@@ -6,6 +7,8 @@ BLACK = (0,0,0)
 WHITE = (255,255,255)
 BLUE = (50,50,255)
 YELLOW = (255,255,0)
+RED = (255,50,50)
+GREEN = (50,255,50)
 
 
 # -- Initialise PyGame
@@ -37,10 +40,10 @@ class Player(pygame.sprite.Sprite):
         self.image.fill(color)
         #set the position of the sprites
         self.rect = self.image.get_rect()
-        self.rect.x = size[0] //2
-        self.rect.y = size[1] - height -40
-        self.lives = 3
-        self.bullet_count = 50
+        self.rect.x = width
+        self.rect.y = size[1] //2
+        #self.lives = 3
+        #self.bullet_count = 50
     def update(self):
         self.rect.x = self.rect.x + self.speed_x
         self.rect.y = self.rect.y + self.speed_y
@@ -51,6 +54,7 @@ class Player(pygame.sprite.Sprite):
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self,x, y, powerup):
+        #check if there is powerup active
         self.powerup = powerup
         if self.powerup == True:
             self.speed = 10
@@ -65,13 +69,58 @@ class Bullet(pygame.sprite.Sprite):
     def update(self):
         self.rect.x = self.rect.x + self.speed
 
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self,width,height):
+        #set speed of sprite
+        self.speed_x = 0
+        self.speed_y = 0
+        #set the width of the sprite
+        self.width = 20
+        self.height = 20
+        #call the construcitor
+        super().__init__()
+        #create the sprite and fill with colours
+        #pick a random number
+        self.randomnumber = random.randrange(1,3)
+        if self.randomnumber == 1:
+            self.color = BLUE #speed will change as well in future
+        elif self.randomnumber == 2:
+            self.color = RED
+        else:
+            self.color = GREEN
+        self.image = pygame.Surface([width,height])
+        self.image.fill(self.color)
+        #set the position of the sprites
+        self.rect = self.image.get_rect()
+        self.rect.x = size[0] - width
+        self.rect.y = size[1] - int(random.randrange(15,480,1))
+        #self.lives = 3
+        #self.bullet_count = 50
+    def update(self):
+        self.rect.x = self.rect.x - 1
+        if self.rect.x < -50:
+            self.kill()
+#        self.rect.x = self.rect.x + self.speed_x
+        self.rect.y = self.rect.y + self.speed_y
+    def enemy_set_speed_x(self,val):
+        self.speed_x = val
+    def enemy_set_speed_y(self,val):
+        self.speed_y = val
 #--lists
 all_sprites_list = pygame.sprite.Group()
+enemy_list = pygame.sprite.Group()
 bullet_list = pygame.sprite.Group()
 bullet_hit_list = pygame.sprite.Group()
 #--create player
 player = Player(YELLOW,10,10)
 all_sprites_list.add (player)
+
+#--create enemies
+NumberOfEnemies = 10
+for i in range(NumberOfEnemies):
+    enemy = Enemy(15,15)
+    enemy_list.add (enemy)
+    all_sprites_list.add (enemy)
 
 # screenr refresh
 clock = pygame.time.Clock()
@@ -91,7 +140,8 @@ while not done:
                 player.player_set_speed_y(-3)
             elif event.key == pygame.K_s:
                 player.player_set_speed_y(3)
-            elif event.key == pygame.K_SPACE: #-create bullet on press
+            #creates bullets on press of space
+            elif event.key == pygame.K_SPACE:
                 bullet = Bullet(player.rect.x, player.rect.y, powerup)
                 bullet_list.add (bullet)
         elif event.type == pygame.KEYUP:
@@ -111,6 +161,7 @@ while not done:
     # -- Draw here
     all_sprites_list.draw (screen)
     bullet_list.draw (screen)
+
     # -- flip display to reveal new position of objects
     pygame.display.flip()
 
