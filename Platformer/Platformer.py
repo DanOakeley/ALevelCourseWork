@@ -27,7 +27,24 @@ done = False
 # --Manages how fast screen refreshes
 clock = pygame.time.Clock()
 
-#--Classes
+# -- Declare variables
+fontName = pygame.font.match_font('consolas')
+
+# -- Functions
+def drawTextWhite (surf, text, size, x, y):
+    font = pygame.font.Font(fontName, size)
+    text_surface = font.render(text, True, WHITE)
+    text_rect = text_surface.get_rect()
+    text_rect.midtop = (x,y)
+    surf.blit(text_surface, text_rect)
+
+def drawTextBlack (surf, text, size, x, y):
+    font = pygame.font.Font(fontName, size)
+    text_surface = font.render(text, True, BLACK)
+    text_rect = text_surface.get_rect()
+    text_rect.midtop = (x,y)
+    surf.blit(text_surface, text_rect)
+# -- Classes
 class Player(pygame.sprite.Sprite):
     def __init__(self,color,width,height):
         #set speed of sprite
@@ -42,8 +59,9 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = width
         self.rect.y = size[1] //2
-        #self.lives = 3
-        #self.bullet_count = 50
+        self.lives = 3
+        self.bullet_count = 50
+        self.score = 0
     def update(self):
         self.rect.x = self.rect.x + self.speed_x
         self.rect.y = self.rect.y + self.speed_y
@@ -81,7 +99,7 @@ class Enemy(pygame.sprite.Sprite):
         super().__init__()
         #create the sprite and fill with colours
         #pick a random number
-        self.randomnumber = random.randrange(1,3)
+        self.randomnumber = random.randrange(1,4)
         if self.randomnumber == 1:
             self.color = BLUE #speed will change as well in future
         elif self.randomnumber == 2:
@@ -94,8 +112,6 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = size[0] - width + int(random.randrange(0,100,10))
         self.rect.y = size[1] - int(random.randrange(15,480,1))
-        #self.lives = 3
-        #self.bullet_count = 50
     def update(self):
         self.rect.x = self.rect.x - 1
         if self.rect.x < -50:
@@ -142,8 +158,12 @@ while not done:
                 player.player_set_speed_y(3)
             #creates bullets on press of space
             elif event.key == pygame.K_SPACE:
-                bullet = Bullet(player.rect.x, player.rect.y+5, powerup)
-                bullet_list.add (bullet)
+                if player.bullet_count > 0:
+                    bullet = Bullet(player.rect.x, player.rect.y+5, powerup)
+                    bullet_list.add (bullet)
+                    player.bullet_count = player.bullet_count -1
+                else:
+                    print("no bullets") # to be replaced by sound effect
                 #bullet count to go here in future
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_a or event.key == pygame.K_d:
@@ -156,14 +176,14 @@ while not done:
     #-- Game logic goes after this comment
     bullet_list.update()
     # -- check for collisions player and ememy
-    player_hit_list = pygame.sprite.spritecollide(player, enemy_list, False)
+    player_hit_list = pygame.sprite.spritecollide(player, enemy_list, True)
 
     for foo in player_hit_list:
         player.player_set_speed_x(0)
         player.player_set_speed_y(0)
         player.rect.x = player_oldx
         player.rect.y = player_oldy
-        print("hit") #will be replaced by player lives in future
+        player.lives = player.lives -1
 
     player_oldx = player.rect.x
     player_oldy = player.rect.y
@@ -172,7 +192,8 @@ while not done:
 
     # -- check for bullet hits with enemies
     bullet_hit_list = pygame.sprite.groupcollide(bullet_list, enemy_list, True, True)
-    #will adjust player score in future
+    for foo in bullet_hit_list:
+        player.score = player.score + 1
 
     # -- check if bullet hits wall
     all_sprites_list.update()
@@ -182,7 +203,9 @@ while not done:
     # -- Draw here
     all_sprites_list.draw (screen)
     bullet_list.draw (screen)
-
+    drawTextWhite(screen, "Lives: " + str(player.lives), 18, 600, 10)
+    drawTextWhite(screen, "Bullets Remaining: " + str(player.bullet_count), 18,450,10)
+    drawTextWhite(screen, "Score: " + str(player.score), 18,300,10)
     # -- flip display to reveal new position of objects
     pygame.display.flip()
 
