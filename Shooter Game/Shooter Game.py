@@ -122,6 +122,7 @@ class Enemy(pygame.sprite.Sprite):
         self.speed_x = val
     def enemy_set_speed_y(self,val):
         self.speed_y = val
+
 #--lists
 all_sprites_list = pygame.sprite.Group()
 enemy_list = pygame.sprite.Group()
@@ -175,6 +176,7 @@ while not done:
 
     #-- Game logic goes after this comment
     bullet_list.update()
+
     # -- check for collisions player and ememy
     player_hit_list = pygame.sprite.spritecollide(player, enemy_list, True)
 
