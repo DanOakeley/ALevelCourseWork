@@ -92,7 +92,7 @@ class Enemy(pygame.sprite.Sprite):
         self.image.fill(self.color)
         #set the position of the sprites
         self.rect = self.image.get_rect()
-        self.rect.x = size[0] - width
+        self.rect.x = size[0] - width + int(random.randrange(0,100,10))
         self.rect.y = size[1] - int(random.randrange(15,480,1))
         #self.lives = 3
         #self.bullet_count = 50
@@ -110,7 +110,7 @@ class Enemy(pygame.sprite.Sprite):
 all_sprites_list = pygame.sprite.Group()
 enemy_list = pygame.sprite.Group()
 bullet_list = pygame.sprite.Group()
-bullet_hit_list = pygame.sprite.Group()
+#bullet_hit_list = pygame.sprite.Group()
 #--create player
 player = Player(YELLOW,10,10)
 all_sprites_list.add (player)
@@ -132,7 +132,7 @@ while not done:
         if event.type == pygame.QUIT:
             done = True
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_a:
+            if (event.key == pygame.K_a):
                 player.player_set_speed_x(-3)
             elif event.key == pygame.K_d:
                 player.player_set_speed_x(3)
@@ -142,8 +142,9 @@ while not done:
                 player.player_set_speed_y(3)
             #creates bullets on press of space
             elif event.key == pygame.K_SPACE:
-                bullet = Bullet(player.rect.x, player.rect.y, powerup)
+                bullet = Bullet(player.rect.x, player.rect.y+5, powerup)
                 bullet_list.add (bullet)
+                #bullet count to go here in future
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_a or event.key == pygame.K_d:
                 player.player_set_speed_x(0)
@@ -152,9 +153,29 @@ while not done:
         #endif
     #nextevent
 
-    # -- Game logic goes after this comment
-    all_sprites_list.update()
+    #-- Game logic goes after this comment
     bullet_list.update()
+    # -- check for collisions player and ememy
+    player_hit_list = pygame.sprite.spritecollide(player, enemy_list, False)
+
+    for foo in player_hit_list:
+        player.player_set_speed_x(0)
+        player.player_set_speed_y(0)
+        player.rect.x = player_oldx
+        player.rect.y = player_oldy
+        print("hit") #will be replaced by player lives in future
+
+    player_oldx = player.rect.x
+    player_oldy = player.rect.y
+
+    # -- check if player hits wall
+
+    # -- check for bullet hits with enemies
+    bullet_hit_list = pygame.sprite.groupcollide(bullet_list, enemy_list, True, True)
+    #will adjust player score in future
+
+    # -- check if bullet hits wall
+    all_sprites_list.update()
     # -- Screen background is BLACK
     screen.fill(BLACK)
 
