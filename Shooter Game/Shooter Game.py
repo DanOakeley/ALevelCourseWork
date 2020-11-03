@@ -11,7 +11,7 @@ RED = (255,50,50)
 GREEN = (50,255,50)
 
 # -- size
-size = (640,480)
+size = (1280,720)
 
 
 # -- Declare variables
@@ -208,7 +208,66 @@ class Game(object):
             # -- flip display to reveal new position of objects
             pygame.display.flip()
 
+def MainMenu():
+    # --Manages how fast screen refreshes
+    clock = pygame.time.Clock()
+    #Menu variables
+    MainMenuDone = False
+    Title = "Main Menu"
+    MenuLine1 = "Pick an Option:"
+    MenuLine2 = "Enter [1] To Start Game"
+    MenuLine3 = "Enter [2] To Open Help Page"
+    MenuLine4 = "Enter [3] To Quit"
+    Instructions1 = "Player 1 Controls:"
+    Instructions2 = "[W] to move up"
+    Instructions3 = "[S] to move down"
+    Instructions4 = "[A] to move left"
+    Instructions5 = "[S] to move right"
+    Instructions6 = "[SPACE] to shoot"
+    #Menu loop
+    while not MainMenuDone:
+        for event in pygame.event.get():
+            MainMenuDone = False
+            #--Quit conditon if press ESC
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    MainMenuDone = True
+                    MainGame()
+               #endif
+                if event.key == pygame.K_2:
+                   MainMenuDone = True
+                   HelpPage()
+                #endif
+                if event.key == pygame.K_3:
+                    MainMenuDone = True
+                #endif
+            #endif
 
+        # -- Screen background is BLACK
+        screen.fill (WHITE)
+        # -- Draw here
+        pygame.draw.rect(screen, YELLOW, (0,0,size[0],150))
+        pygame.draw.rect(screen, BLUE, (430,270,300,250))
+        drawTextBlack(screen, str(Title), 50, 150, 50)
+        drawTextBlack(screen, str(MenuLine1), 20,100, 170)
+        drawTextBlack(screen, str(MenuLine2), 20, 130, 220)
+        drawTextBlack(screen, str(MenuLine3), 20, 170, 240)
+        drawTextBlack(screen, str(MenuLine4), 20, 66, 260)
+        drawTextWhite(screen, str(Instructions1), 20, 600, 280)
+        drawTextWhite(screen, str(Instructions2), 20, 600, 320)
+        drawTextWhite(screen, str(Instructions3), 20, 600, 340)
+        drawTextWhite(screen, str(Instructions4), 20, 600, 380)
+        drawTextWhite(screen, str(Instructions5), 20, 600, 420)
+        drawTextWhite(screen, str(Instructions6), 20, 600, 440)
+
+        # -- flip display to reveal new position of objects
+        pygame.display.flip()
+        # -- clock ticks over
+        clock.tick(60)
+    #End While
+
+def HelpPage():
+    print("help")
 def MainGame():
     # -- Exit game flag set to false
     done = False
@@ -235,5 +294,5 @@ def MainGame():
     #End While - End of game loop
     pygame.quit()
 
-MainGame()
+MainMenu()
 pygame.quit()
