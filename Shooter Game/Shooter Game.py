@@ -2,7 +2,7 @@ import pygame
 import random
 # -- Global constants
 
-# -- colours5
+# -- colours
 BLACK = (0,0,0)
 WHITE = (255,255,255)
 BLUE = (50,50,255)
@@ -10,25 +10,21 @@ YELLOW = (255,255,0)
 RED = (255,50,50)
 GREEN = (50,255,50)
 
-
-# -- Initialise PyGame
-pygame.init()
-
-# -- Blank Screen
+# -- size
 size = (640,480)
-screen = pygame.display.set_mode(size, pygame.RESIZABLE)
 
-# -- Title of new window/screen
-pygame.display.set_caption("My Window")
-
-# -- Exit game flag set to false
-done = False
-
-# --Manages how fast screen refreshes
-clock = pygame.time.Clock()
 
 # -- Declare variables
 fontName = pygame.font.match_font('consolas')
+
+# -- Initialise PyGame
+pygame.init()
+# -- Blank Screen
+screen = pygame.display.set_mode(size, pygame.RESIZABLE)
+#will be FULLSCREEN
+# -- Title of new window/screen
+pygame.display.set_caption("My Window")
+
 
 # -- Functions
 def drawTextWhite (surf, text, size, x, y):
@@ -44,6 +40,9 @@ def drawTextBlack (surf, text, size, x, y):
     text_rect = text_surface.get_rect()
     text_rect.midtop = (x,y)
     surf.blit(text_surface, text_rect)
+
+# -- Main Menu
+
 # -- Classes
 class Player(pygame.sprite.Sprite):
     def __init__(self,color,width,height):
@@ -79,7 +78,7 @@ class Bullet(pygame.sprite.Sprite):
         elif self.powerup == False:
             self.speed = 5
         super().__init__()
-        self.image = pygame.Surface([2,2])
+        self.image = pygame.Surface([3,3])
         self.image.fill(WHITE)
         self.rect = self.image.get_rect()
         self.rect.x = x
@@ -123,95 +122,118 @@ class Enemy(pygame.sprite.Sprite):
     def enemy_set_speed_y(self,val):
         self.speed_y = val
 
-#--lists
-all_sprites_list = pygame.sprite.Group()
-enemy_list = pygame.sprite.Group()
-bullet_list = pygame.sprite.Group()
-#bullet_hit_list = pygame.sprite.Group()
-#--create player
-player = Player(YELLOW,10,10)
-all_sprites_list.add (player)
 
-#--create enemies
-NumberOfEnemies = 10
-for i in range(NumberOfEnemies):
-    enemy = Enemy(15,15)
-    enemy_list.add (enemy)
-    all_sprites_list.add (enemy)
+class Game(object):
+    def __init__(self):
+        self.game_over = False
+        #--lists
+        self.all_sprites_list = pygame.sprite.Group()
+        self.enemy_list = pygame.sprite.Group()
+        self.bullet_list = pygame.sprite.Group()
+        #bullet_hit_list = pygame.sprite.Group()
+        #--create player
+        self.player = Player(YELLOW,10,10)
+        self.all_sprites_list.add (self.player)
+        #--create enemies
+        NumberOfEnemies = 10
+        for i in range(NumberOfEnemies):
+            enemy = Enemy(15,15)
+            self.enemy_list.add (enemy)
+            self.all_sprites_list.add (enemy)
+    def events(self):
+        # -- User input and controls
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                done = True
+            elif event.type == pygame.KEYDOWN:
+                if (event.key == pygame.K_ESCAPE):
+                    pygame.quit()
+                if (event.key == pygame.K_a):
+                    self.player.player_set_speed_x(-3)
+                elif event.key == pygame.K_d:
+                    self.player.player_set_speed_x(3)
+                elif event.key == pygame.K_w:
+                    self.player.player_set_speed_y(-3)
+                elif event.key == pygame.K_s:
+                    self.player.player_set_speed_y(3)
+                #creates bullets on press of space
+                elif event.key == pygame.K_SPACE:
+                    if self.player.bullet_count > 0:
+                        bullet = Bullet(self.player.rect.x, self.player.rect.y+5, Bullet.powerup)
+                        self.bullet_list.add (bullet)
+                        self.player.bullet_count = self.player.bullet_count -1
+                    else:
+                        print("no bullets") # to be replaced by sound effect
+                    #bullet count to go here in future
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_a or event.key == pygame.K_d:
+                    self.player.player_set_speed_x(0)
+                if event.key == pygame.K_w or event.key == pygame.K_s:
+                    self.player.player_set_speed_y(0)
+            #endif
+        #nextevent
+    def rungame(self):
+        #-- Game logic goes after this comment
+        self.bullet_list.update()
+        # -- check for collisions player and ememy
+        self.player_hit_list = pygame.sprite.spritecollide(self.player, self.enemy_list, True)
 
-# screenr refresh
-clock = pygame.time.Clock()
-# -- Game Loop
-while not done:
-    powerup = False
-    # -- User input and controls
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            done = True
-        elif event.type == pygame.KEYDOWN:
-            if (event.key == pygame.K_a):
-                player.player_set_speed_x(-3)
-            elif event.key == pygame.K_d:
-                player.player_set_speed_x(3)
-            elif event.key == pygame.K_w:
-                player.player_set_speed_y(-3)
-            elif event.key == pygame.K_s:
-                player.player_set_speed_y(3)
-            #creates bullets on press of space
-            elif event.key == pygame.K_SPACE:
-                if player.bullet_count > 0:
-                    bullet = Bullet(player.rect.x, player.rect.y+5, powerup)
-                    bullet_list.add (bullet)
-                    player.bullet_count = player.bullet_count -1
-                else:
-                    print("no bullets") # to be replaced by sound effect
-                #bullet count to go here in future
-        elif event.type == pygame.KEYUP:
-            if event.key == pygame.K_a or event.key == pygame.K_d:
-                player.player_set_speed_x(0)
-            if event.key == pygame.K_w or event.key == pygame.K_s:
-                player.player_set_speed_y(0)
-        #endif
-    #nextevent
+        for foo in self.player_hit_list:
+            self.player.player_set_speed_x(0)
+            self.player.player_set_speed_y(0)
+            self.player.rect.x = self.player_oldx
+            self.player.rect.y = self.player_oldy
+            self.player.lives = self.player.lives -1
+        self.player_oldx = self.player.rect.x
+        self.player_oldy = self.player.rect.y
+        # -- check if player hits wall
+        # -- check for bullet hits with enemies
+        bullet_hit_list = pygame.sprite.groupcollide(self.bullet_list, self.enemy_list, True, True)
+        for foo in bullet_hit_list:
+            self.player.score = self.player.score + 1
+        # -- check if bullet hits wall
+        self.all_sprites_list.update()
+    def displayframe(self,screen):
+        # -- Screen background is BLACK
+        screen.fill(BLACK)
+        if self.game_over:
+            print("hello")
+        if not self.game_over:
+            # -- Draw here
+            self.all_sprites_list.draw (screen)
+            self.bullet_list.draw (screen)
+            drawTextWhite(screen, "Lives: " + str(self.player.lives), 18, size[0]-40, 10)
+            drawTextWhite(screen, "Bullets Remaining: " + str(self.player.bullet_count), 18,size[0]-190,10)
+            drawTextWhite(screen, "Score: " + str(self.player.score), 18,size[0]-340,10)
+            # -- flip display to reveal new position of objects
+            pygame.display.flip()
 
-    #-- Game logic goes after this comment
-    bullet_list.update()
 
-    # -- check for collisions player and ememy
-    player_hit_list = pygame.sprite.spritecollide(player, enemy_list, True)
+def MainGame():
+    # -- Exit game flag set to false
+    done = False
 
-    for foo in player_hit_list:
-        player.player_set_speed_x(0)
-        player.player_set_speed_y(0)
-        player.rect.x = player_oldx
-        player.rect.y = player_oldy
-        player.lives = player.lives -1
+    # --Manages how fast screen refreshes
+    clock = pygame.time.Clock()
 
-    player_oldx = player.rect.x
-    player_oldy = player.rect.y
+    # -- create an instance of the game
+    game = Game()
+    # -- Game Loop
+    while not done:
+        Bullet.powerup = False
 
-    # -- check if player hits wall
+        # -- process user inputs
+        done = game.events()
 
-    # -- check for bullet hits with enemies
-    bullet_hit_list = pygame.sprite.groupcollide(bullet_list, enemy_list, True, True)
-    for foo in bullet_hit_list:
-        player.score = player.score + 1
+        # -- update objects and control collisions
+        game.rungame()
 
-    # -- check if bullet hits wall
-    all_sprites_list.update()
-    # -- Screen background is BLACK
-    screen.fill(BLACK)
+        #draw the current screen
+        game.displayframe(screen)
+        # -- The clock ticks over
+        clock.tick(60)
+    #End While - End of game loop
+    pygame.quit()
 
-    # -- Draw here
-    all_sprites_list.draw (screen)
-    bullet_list.draw (screen)
-    drawTextWhite(screen, "Lives: " + str(player.lives), 18, 600, 10)
-    drawTextWhite(screen, "Bullets Remaining: " + str(player.bullet_count), 18,450,10)
-    drawTextWhite(screen, "Score: " + str(player.score), 18,300,10)
-    # -- flip display to reveal new position of objects
-    pygame.display.flip()
-
-    # -- The clock ticks over
-    clock.tick(60)
-#End While - End of game loop
+MainGame()
 pygame.quit()
