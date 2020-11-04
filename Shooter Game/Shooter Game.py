@@ -9,6 +9,9 @@ BLUE = (50,50,255)
 YELLOW = (255,255,0)
 RED = (255,50,50)
 GREEN = (50,255,50)
+PINK = (255,105,180)
+ORANGE = (255,165,0)
+CYAN = (0,255,255)
 
 # -- size
 size = (1280,720)
@@ -68,6 +71,8 @@ class Player(pygame.sprite.Sprite):
         self.speed_x = val
     def player_set_speed_y(self,val):
         self.speed_y = val
+    def player_add_lives(self):
+        self.lives = self.lives + 1
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self,x, y, powerup):
@@ -122,6 +127,35 @@ class Enemy(pygame.sprite.Sprite):
     def enemy_set_speed_y(self,val):
         self.speed_y = val
 
+class Collectable(pygame.sprite.Sprite):
+    def __init__(self,x, y, type):
+        self.width = 20
+        self.height = 20
+        self.x = x
+        self.y = y
+        self.type = type
+        #call the constructor
+        super().__init__()
+        #type1 = more bullets(ORANGE) type2 = more lives(CYAN) type3 = increased speed(PINK)
+        if self.type == 1:
+            self.color = ORANGE
+        if self.type == 2:
+            self.color = CYAN
+        if self.type == 3:
+            self.color = PINK
+        self.image = pygame.Surface([self.width,self.height])
+        self.image.fill(self.color)
+        #set the position of the sprites
+        self.rect = self.image.get_rect()
+    def typefunction(self):
+        if self.type == 1:
+            player.bullet_count = player.bullet_count + 20
+        if self.type == 2:
+            game.player.player_add_lives()
+        if self.type == 3:
+            player.speed_x = player.speed_x + 2
+            player.speed_y = player.speed_y + 2
+
 
 class Game(object):
     def __init__(self):
@@ -130,10 +164,23 @@ class Game(object):
         self.all_sprites_list = pygame.sprite.Group()
         self.enemy_list = pygame.sprite.Group()
         self.bullet_list = pygame.sprite.Group()
+        self.collectable_list = pygame.sprite.Group()
         #bullet_hit_list = pygame.sprite.Group()
         #--create player
         self.player = Player(YELLOW,10,10)
         self.all_sprites_list.add (self.player)
+        self.collectable = Collectable(200,200,2)
+        self.all_sprites_list.add(self.collectable)
+        self.collectable_list.add(self.collectable)
+        self.spawnEnemies()
+    def SpawnCollectables(self):
+        self.randomnumberX = random.randint(10,600)
+        self.randomnumberY = random.randint(10,700)
+        self.randomnumberTYPE = random.randint(1,3)
+        self.collectable = Collectable(self.randomnumberX,self.randomnumberY,self.randomnumberTYPE)
+        self.all_sprites_list.add(self.collectable)
+        self.collectable_list.add(self.collectable)
+    def spawnEnemies(self):
         #--create enemies
         NumberOfEnemies = 10
         for i in range(NumberOfEnemies):
@@ -147,6 +194,7 @@ class Game(object):
                 done = True
             elif event.type == pygame.KEYDOWN:
                 if (event.key == pygame.K_ESCAPE):
+                    #done = True
                     pygame.quit()
                 if (event.key == pygame.K_a):
                     self.player.player_set_speed_x(-3)
@@ -192,12 +240,22 @@ class Game(object):
         for foo in bullet_hit_list:
             self.player.score = self.player.score + 1
         # -- check if bullet hits wall
+
+        # -- check collectable collisions
+        self.collectable_hit_list = pygame.sprite.spritecollide(self.player, self.collectable_list, True)
+        for foo in self.collectable_hit_list:
+            self.collectable.typefunction()
+            print("hello")
+        #end game if out of Lives
+        if self.player.lives == 0:
+            self.game_over = True
         self.all_sprites_list.update()
     def displayframe(self,screen):
         # -- Screen background is BLACK
         screen.fill(BLACK)
         if self.game_over:
-            print("hello")
+            print(self.player.score)
+            GameOverScreen()
         if not self.game_over:
             # -- Draw here
             self.all_sprites_list.draw (screen)
@@ -207,6 +265,46 @@ class Game(object):
             drawTextWhite(screen, "Score: " + str(self.player.score), 18,size[0]-340,10)
             # -- flip display to reveal new position of objects
             pygame.display.flip()
+def GameOverScreen():
+    # --Manages how fast screen refreshes
+    clock = pygame.time.Clock()
+    #Menu variables
+    GameOverScreenDone = False
+    Title = "Game Over !!!!"
+    MenuLine1 = "Pick an Option:"
+    MenuLine2 = "[1] Open Main Menu"
+    MenuLine3 = "[2] Quit"
+    #Menu loop
+    while not GameOverScreenDone:
+        for event in pygame.event.get():
+            GameOverScreenDone = False
+            #--Quit conditon if press ESC
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    GameOverScreenDone = True
+                    MainMenu()
+               #endif
+                if event.key == pygame.K_2:
+                   GameOverScreenDone = True
+                   pygame.quit()
+                #endif
+            #endif
+
+        # -- Screen background is BLACK
+        screen.fill (WHITE)
+        # -- Draw here
+        pygame.draw.rect(screen, YELLOW, (0,0,size[0],150))
+        drawTextBlack(screen, str(Title), 50, 200, 50)
+        #going to add player score as well
+        drawTextBlack(screen, str(MenuLine1), 20,100, 170)
+        drawTextBlack(screen, str(MenuLine2), 20, 115, 220)
+        drawTextBlack(screen, str(MenuLine3), 20, 60, 240)
+
+        # -- flip display to reveal new position of objects
+        pygame.display.flip()
+        # -- clock ticks over
+        clock.tick(60)
+    #End While
 
 def MainMenu():
     # --Manages how fast screen refreshes
@@ -215,15 +313,9 @@ def MainMenu():
     MainMenuDone = False
     Title = "Main Menu"
     MenuLine1 = "Pick an Option:"
-    MenuLine2 = "Enter [1] To Start Game"
-    MenuLine3 = "Enter [2] To Open Help Page"
-    MenuLine4 = "Enter [3] To Quit"
-    Instructions1 = "Player 1 Controls:"
-    Instructions2 = "[W] to move up"
-    Instructions3 = "[S] to move down"
-    Instructions4 = "[A] to move left"
-    Instructions5 = "[S] to move right"
-    Instructions6 = "[SPACE] to shoot"
+    MenuLine2 = "[1] Start Game"
+    MenuLine3 = "[2] Open Help Page"
+    MenuLine4 = "[3] Quit"
     #Menu loop
     while not MainMenuDone:
         for event in pygame.event.get():
@@ -240,6 +332,7 @@ def MainMenu():
                 #endif
                 if event.key == pygame.K_3:
                     MainMenuDone = True
+                    pygame.quit()
                 #endif
             #endif
 
@@ -247,18 +340,11 @@ def MainMenu():
         screen.fill (WHITE)
         # -- Draw here
         pygame.draw.rect(screen, YELLOW, (0,0,size[0],150))
-        pygame.draw.rect(screen, BLUE, (430,270,300,250))
         drawTextBlack(screen, str(Title), 50, 150, 50)
         drawTextBlack(screen, str(MenuLine1), 20,100, 170)
-        drawTextBlack(screen, str(MenuLine2), 20, 130, 220)
-        drawTextBlack(screen, str(MenuLine3), 20, 170, 240)
-        drawTextBlack(screen, str(MenuLine4), 20, 66, 260)
-        drawTextWhite(screen, str(Instructions1), 20, 600, 280)
-        drawTextWhite(screen, str(Instructions2), 20, 600, 320)
-        drawTextWhite(screen, str(Instructions3), 20, 600, 340)
-        drawTextWhite(screen, str(Instructions4), 20, 600, 380)
-        drawTextWhite(screen, str(Instructions5), 20, 600, 420)
-        drawTextWhite(screen, str(Instructions6), 20, 600, 440)
+        drawTextBlack(screen, str(MenuLine2), 20, 145, 220)
+        drawTextBlack(screen, str(MenuLine3), 20, 167, 240)
+        drawTextBlack(screen, str(MenuLine4), 20, 112, 260)
 
         # -- flip display to reveal new position of objects
         pygame.display.flip()
@@ -268,7 +354,59 @@ def MainMenu():
 
 def HelpPage():
     print("help")
+    # --Manages how fast screen refreshes
+    clock = pygame.time.Clock()
+    #Menu variables
+    HelpMenuDone = False
+    Title = "Help Menu"
+    MenuLine1 = " [1] Back to Main Menu"
+    MenuLine2 = "[2] quit"
+    Instructions1 = "Player Controls:"
+    Instructions2 = "[W] to move up"
+    Instructions3 = "[S] to move down"
+    Instructions4 = "[A] to move left"
+    Instructions5 = "[S] to move right"
+    Instructions6 = "[SPACE] to shoot"
+    #Menu loop
+    while not HelpMenuDone:
+        for event in pygame.event.get():
+            HelpMenuDone = False
+            #--Quit conditon if press ESC
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    HelpMenuDone = True
+                    MainMenu()
+               #endif
+                if event.key == pygame.K_2:
+                   HelpMenuDone = True
+                   pygame.quit()
+                #endif
+            #endif
+
+        # -- Screen background is BLACK
+        screen.fill (WHITE)
+        # -- Draw here
+        pygame.draw.rect(screen, YELLOW, (0,0,size[0],150))
+        pygame.draw.rect(screen, BLUE, (430,270,300,250))
+        drawTextBlack(screen, str(Title), 50, 150, 50)
+        drawTextBlack(screen, str(MenuLine1), 20,120, 170)
+        drawTextBlack(screen, str(MenuLine2), 20, 53, 220)
+        drawTextWhite(screen, str(Instructions1), 20, 600, 280)
+        drawTextWhite(screen, str(Instructions2), 20, 600, 310)
+        drawTextWhite(screen, str(Instructions3), 20, 600, 340)
+        drawTextWhite(screen, str(Instructions4), 20, 600, 370)
+        drawTextWhite(screen, str(Instructions5), 20, 600, 400)
+        drawTextWhite(screen, str(Instructions6), 20, 600, 430)
+
+        # -- flip display to reveal new position of objects
+        pygame.display.flip()
+        # -- clock ticks over
+        clock.tick(60)
+    #End While
+
 def MainGame():
+    # -- counter setup
+    counter = 0
     # -- Exit game flag set to false
     done = False
 
@@ -277,6 +415,8 @@ def MainGame():
 
     # -- create an instance of the game
     game = Game()
+#    game.spawnEnemies()
+#    game.SpawnCollectables()
     # -- Game Loop
     while not done:
         Bullet.powerup = False
@@ -291,6 +431,10 @@ def MainGame():
         game.displayframe(screen)
         # -- The clock ticks over
         clock.tick(60)
+        #counter for spawning enemies
+        counter = counter + 1
+        if counter %800 == 0:
+            game.spawnEnemies()
     #End While - End of game loop
     pygame.quit()
 
