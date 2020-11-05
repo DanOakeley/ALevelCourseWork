@@ -19,7 +19,12 @@ size = (1280,720)
 
 # -- Declare variables
 fontName = pygame.font.match_font('consolas')
-
+score = 0
+# -- open highscore file set the varible and close it
+highscorefile = open("HighScore.txt","r")
+highscore = (highscorefile.read())
+highscorefile.close()
+oldhighscore = int(highscore)
 # -- Initialise PyGame
 pygame.init()
 # -- Blank Screen
@@ -40,6 +45,13 @@ def drawTextWhite (surf, text, size, x, y):
 def drawTextBlack (surf, text, size, x, y):
     font = pygame.font.Font(fontName, size)
     text_surface = font.render(text, True, BLACK)
+    text_rect = text_surface.get_rect()
+    text_rect.midtop = (x,y)
+    surf.blit(text_surface, text_rect)
+
+def drawTextCyan (surf, text, size, x, y):
+    font = pygame.font.Font(fontName, size)
+    text_surface = font.render(text, True, CYAN)
     text_rect = text_surface.get_rect()
     text_rect.midtop = (x,y)
     surf.blit(text_surface, text_rect)
@@ -76,15 +88,17 @@ class Player(pygame.sprite.Sprite):
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self,x, y, powerup):
+        super().__init__()
         #check if there is powerup active
         self.powerup = powerup
         if self.powerup == True:
             self.speed = 10
+            self.image = pygame.Surface([5,5])
+            self.image.fill(PINK)
         elif self.powerup == False:
             self.speed = 5
-        super().__init__()
-        self.image = pygame.Surface([3,3])
-        self.image.fill(WHITE)
+            self.image = pygame.Surface([3,3])
+            self.image.fill(WHITE)
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
@@ -136,7 +150,7 @@ class Collectable(pygame.sprite.Sprite):
         self.type = type
         #call the constructor
         super().__init__()
-        #type1 = more bullets(ORANGE) type2 = more lives(CYAN) type3 = increased speed(PINK)
+        #type1 = more bullets(ORANGE) type2 = more lives(CYAN) type3 = increased speed & size of bullet(PINK)
         if self.type == 1:
             self.color = ORANGE
         if self.type == 2:
@@ -149,13 +163,12 @@ class Collectable(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
     def typefunction(self):
         if self.type == 1:
-            player.bullet_count = player.bullet_count + 20
+            game.player.bullet_count = game.player.bullet_count + 20
         if self.type == 2:
             game.player.player_add_lives()
         if self.type == 3:
-            player.speed_x = player.speed_x + 2
-            player.speed_y = player.speed_y + 2
-
+            Bullet.powerup = True
+            print("hello")
 
 class Game(object):
     def __init__(self):
@@ -169,7 +182,7 @@ class Game(object):
         #--create player
         self.player = Player(YELLOW,10,10)
         self.all_sprites_list.add (self.player)
-        self.collectable = Collectable(200,200,2)
+        self.collectable = Collectable(200,200,1)
         self.all_sprites_list.add(self.collectable)
         self.collectable_list.add(self.collectable)
         self.spawnEnemies()
@@ -194,8 +207,8 @@ class Game(object):
                 done = True
             elif event.type == pygame.KEYDOWN:
                 if (event.key == pygame.K_ESCAPE):
-                    #done = True
-                    pygame.quit()
+                    done = True
+                    MainMenu()
                 if (event.key == pygame.K_a):
                     self.player.player_set_speed_x(-3)
                 elif event.key == pygame.K_d:
@@ -253,27 +266,44 @@ class Game(object):
     def displayframe(self,screen):
         # -- Screen background is BLACK
         screen.fill(BLACK)
+        global score
+        global highscore
         if self.game_over:
-            print(self.player.score)
+            highscore = int(highscore)
+            score = int((self.player.score))
+            if score > highscore:
+                highscore = score
+                #highscore = int(highscore)
+                highscorefile = open("HighScore.txt","w")
+                highscorefile.write(str(highscore))
+                highscorefile.close()
             GameOverScreen()
         if not self.game_over:
             # -- Draw here
             self.all_sprites_list.draw (screen)
             self.bullet_list.draw (screen)
-            drawTextWhite(screen, "Lives: " + str(self.player.lives), 18, size[0]-40, 10)
-            drawTextWhite(screen, "Bullets Remaining: " + str(self.player.bullet_count), 18,size[0]-190,10)
-            drawTextWhite(screen, "Score: " + str(self.player.score), 18,size[0]-340,10)
+            drawTextWhite(screen, "Lives:" + str(self.player.lives), 18, size[0]-40, 10)
+            drawTextWhite(screen, "Bullets Remaining:" + str(self.player.bullet_count), 18,size[0]-190,10)
+            drawTextWhite(screen, "Score:" + str(self.player.score), 18,size[0]-350,10)
+            drawTextWhite(screen, "HighScore:" + str(highscore), 18, size[0]-470,10)
             # -- flip display to reveal new position of objects
             pygame.display.flip()
 def GameOverScreen():
     # --Manages how fast screen refreshes
     clock = pygame.time.Clock()
     #Menu variables
+    global score
+    global highscore
+    global oldhighscore
     GameOverScreenDone = False
     Title = "Game Over !!!!"
     MenuLine1 = "Pick an Option:"
     MenuLine2 = "[1] Open Main Menu"
     MenuLine3 = "[2] Quit"
+    ScoreIntro = "Score: "
+    HighscoreIntro = "Highscore: "
+    NewHighScore1 = "Congratulations"
+    NewHighScore2 = " You Got A New High Score!!!!"
     #Menu loop
     while not GameOverScreenDone:
         for event in pygame.event.get():
@@ -293,12 +323,19 @@ def GameOverScreen():
         # -- Screen background is BLACK
         screen.fill (WHITE)
         # -- Draw here
-        pygame.draw.rect(screen, YELLOW, (0,0,size[0],150))
-        drawTextBlack(screen, str(Title), 50, 200, 50)
-        #going to add player score as well
+        pygame.draw.rect(screen, BLACK, (0,0,size[0],150))
+        drawTextWhite(screen, str(Title), 50, 200, 50)
+        drawTextCyan(screen, str(HighscoreIntro), 50, 1000, 50)
+        drawTextCyan(screen, str(highscore), 50, 1175, 50)
+        drawTextBlack(screen, str(ScoreIntro), 75, 750, 200)
+        drawTextBlack(screen, str(score), 75, 1000, 200)
         drawTextBlack(screen, str(MenuLine1), 20,100, 170)
         drawTextBlack(screen, str(MenuLine2), 20, 115, 220)
         drawTextBlack(screen, str(MenuLine3), 20, 60, 240)
+        if int(score) > int(oldhighscore):
+            pygame.draw.rect(screen, CYAN, (15,390,1248,200))
+            drawTextBlack(screen, str(NewHighScore1), 80, 620, 400)
+            drawTextBlack(screen, str(NewHighScore2), 80, 620, 500)
 
         # -- flip display to reveal new position of objects
         pygame.display.flip()
@@ -339,7 +376,7 @@ def MainMenu():
         # -- Screen background is BLACK
         screen.fill (WHITE)
         # -- Draw here
-        pygame.draw.rect(screen, YELLOW, (0,0,size[0],150))
+        pygame.draw.rect(screen, ORANGE, (0,0,size[0],150))
         drawTextBlack(screen, str(Title), 50, 150, 50)
         drawTextBlack(screen, str(MenuLine1), 20,100, 170)
         drawTextBlack(screen, str(MenuLine2), 20, 145, 220)
