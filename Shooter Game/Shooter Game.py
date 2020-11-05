@@ -93,7 +93,7 @@ class Bullet(pygame.sprite.Sprite):
         self.powerup = powerup
         if self.powerup == True:
             self.speed = 10
-            self.image = pygame.Surface([5,5])
+            self.image = pygame.Surface([6,6])
             self.image.fill(PINK)
         elif self.powerup == False:
             self.speed = 5
@@ -129,7 +129,7 @@ class Enemy(pygame.sprite.Sprite):
         #set the position of the sprites
         self.rect = self.image.get_rect()
         self.rect.x = size[0] - width + int(random.randrange(0,100,10))
-        self.rect.y = size[1] - int(random.randrange(15,480,1))
+        self.rect.y = size[1] - int(random.randrange(15,size[1],1))
     def update(self):
         self.rect.x = self.rect.x - 1
         if self.rect.x < -50:
@@ -148,6 +148,9 @@ class Collectable(pygame.sprite.Sprite):
         self.x = x
         self.y = y
         self.type = type
+#        self.rect.x = random.randrange(10,600)
+#        self.rect.y = random.randrange(10,700)
+#        self.type = random.randrange(1,3)
         #call the constructor
         super().__init__()
         #type1 = more bullets(ORANGE) type2 = more lives(CYAN) type3 = increased speed & size of bullet(PINK)
@@ -161,18 +164,21 @@ class Collectable(pygame.sprite.Sprite):
         self.image.fill(self.color)
         #set the position of the sprites
         self.rect = self.image.get_rect()
-    def typefunction(self):
+        self.rect.x = self.x
+        self.rect.y = self.y
+    def typefunction(self,g):
         if self.type == 1:
-            game.player.bullet_count = game.player.bullet_count + 20
+            g.player.bullet_count = g.player.bullet_count + 20
+            #g.playerBulletUpdate(20)
         if self.type == 2:
-            game.player.player_add_lives()
+            g.player.player_add_lives()
         if self.type == 3:
-            Bullet.powerup = True
-            print("hello")
+            g.BulletPowerUp = True
 
 class Game(object):
     def __init__(self):
         self.game_over = False
+        self.BulletPowerUp = False
         #--lists
         self.all_sprites_list = pygame.sprite.Group()
         self.enemy_list = pygame.sprite.Group()
@@ -182,14 +188,15 @@ class Game(object):
         #--create player
         self.player = Player(YELLOW,10,10)
         self.all_sprites_list.add (self.player)
-        self.collectable = Collectable(200,200,1)
+        self.SpawnCollectable()
+        #self.collectable = Collectable(200,200,3)
         self.all_sprites_list.add(self.collectable)
         self.collectable_list.add(self.collectable)
         self.spawnEnemies()
-    def SpawnCollectables(self):
-        self.randomnumberX = random.randint(10,600)
-        self.randomnumberY = random.randint(10,700)
-        self.randomnumberTYPE = random.randint(1,3)
+    def SpawnCollectable(self):
+        self.randomnumberX = random.randrange(200,750)
+        self.randomnumberY = random.randrange(10,700)
+        self.randomnumberTYPE = random.randrange(1,4)
         self.collectable = Collectable(self.randomnumberX,self.randomnumberY,self.randomnumberTYPE)
         self.all_sprites_list.add(self.collectable)
         self.collectable_list.add(self.collectable)
@@ -205,10 +212,12 @@ class Game(object):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 done = True
+                return(done)
             elif event.type == pygame.KEYDOWN:
                 if (event.key == pygame.K_ESCAPE):
-                    done = True
                     MainMenu()
+                    done = True
+                    return(done)
                 if (event.key == pygame.K_a):
                     self.player.player_set_speed_x(-3)
                 elif event.key == pygame.K_d:
@@ -220,11 +229,12 @@ class Game(object):
                 #creates bullets on press of space
                 elif event.key == pygame.K_SPACE:
                     if self.player.bullet_count > 0:
-                        bullet = Bullet(self.player.rect.x, self.player.rect.y+5, Bullet.powerup)
+                        bullet = Bullet(self.player.rect.x, self.player.rect.y+5, self.BulletPowerUp)
                         self.bullet_list.add (bullet)
                         self.player.bullet_count = self.player.bullet_count -1
                     else:
-                        print("no bullets") # to be replaced by sound effect
+                        print("no bullets")# to be replaced by sound effect
+                        self.BulletPowerUp = False
                     #bullet count to go here in future
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_a or event.key == pygame.K_d:
@@ -255,14 +265,17 @@ class Game(object):
         # -- check if bullet hits wall
 
         # -- check collectable collisions
+        pygame.sprite.groupcollide(self.collectable_list,self.enemy_list, True, False)
         self.collectable_hit_list = pygame.sprite.spritecollide(self.player, self.collectable_list, True)
         for foo in self.collectable_hit_list:
-            self.collectable.typefunction()
-            print("hello")
+            self.collectable.typefunction(self)
         #end game if out of Lives
         if self.player.lives == 0:
             self.game_over = True
         self.all_sprites_list.update()
+#    def playerBulletUpdate(self,amount):
+#        self.amount = amount
+#        self.player.bullet_count = self.player.bullet_count + self.amount
     def displayframe(self,screen):
         # -- Screen background is BLACK
         screen.fill(BLACK)
@@ -390,7 +403,6 @@ def MainMenu():
     #End While
 
 def HelpPage():
-    print("help")
     # --Manages how fast screen refreshes
     clock = pygame.time.Clock()
     #Menu variables
@@ -472,6 +484,8 @@ def MainGame():
         counter = counter + 1
         if counter %800 == 0:
             game.spawnEnemies()
+        if counter%1250 == 0:
+            game.SpawnCollectable()
     #End While - End of game loop
     pygame.quit()
 
