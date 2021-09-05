@@ -150,36 +150,6 @@ class Enemy(pygame.sprite.Sprite):
         self.speed_x = val
     def enemy_set_speed_y(self,val):
         self.speed_y = val
-class Boss(pygame.sprite.Sprite):
-    def __init__(self,width,height,health):
-        #set speed of sprite
-        self.speed_x = 0
-        self.speed_y = 0
-        #set the width of the sprite
-        self.width = width
-        self.height = height
-        self.health = health
-        #call the construcitor
-        super().__init__()
-        #create the sprite and fill with colours
-        self.color = PINK
-        self.image = pygame.Surface([width,height])
-        self.image.fill(self.color)
-#        self.image = self.whichimage # temp
-        #set the position of the sprites
-        self.rect = self.image.get_rect()
-        self.rect.x = size[0] /2
-        self.rect.y = size[1]
-    def update(self):
-        self.rect.x = self.rect.x - 1
-        if self.rect.x < -50:
-            self.kill()
-#        self.rect.x = self.rect.x + self.speed_x
-        self.rect.y = self.rect.y + self.speed_y
-    def Boss_set_speed_x(self,val):
-        self.speed_x = val
-    def Boss_set_speed_y(self,val):
-        self.speed_y = val
 
 class Collectable(pygame.sprite.Sprite):
     def __init__(self,x, y, type):
@@ -233,7 +203,6 @@ class Game(object):
         #--lists
         self.all_sprites_list = pygame.sprite.Group()
         self.enemy_list = pygame.sprite.Group()
-        self.boss_list = pygame.sprite.Group()
         self.bullet_list = pygame.sprite.Group()
         self.collectable_list = pygame.sprite.Group()
         #bullet_hit_list = pygame.sprite.Group()
@@ -261,9 +230,7 @@ class Game(object):
             self.all_sprites_list.add (enemy)
     def spawnBoss(self):
         #--create boss
-        boss = Boss(100,100,300)
-        self.boss_list.add (boss)
-        self.all_sprites_list.add (boss)
+        boss = Enemy(100,100,300)
 
     def events(self):
         # -- User input and controls
@@ -295,14 +262,13 @@ class Game(object):
                         self.BulletPowerUp = False
                     #bullet count to go here in future
             elif event.type == pygame.KEYUP:
-                if (event.key == pygame.K_a) or (event.key == pygame.K_d):
+                if event.key == pygame.K_a or event.key == pygame.K_d:
                     self.player.player_set_speed_x(0)
-                if (event.key == pygame.K_w) or (event.key == pygame.K_s):
+                if event.key == pygame.K_w or event.key == pygame.K_s:
                     self.player.player_set_speed_y(0)
             #endif
         #nextevent
     def rungame(self):
-        BossHitCounter = 0
         #-- Game logic goes after this comment
         self.bullet_list.update()
         # -- check for collisions player and ememy
@@ -321,15 +287,7 @@ class Game(object):
         bullet_hit_list = pygame.sprite.groupcollide(self.bullet_list, self.enemy_list, True, True)
         for foo in bullet_hit_list:
             self.player.score = self.player.score + 1
-
-        # -- check for bullet hits with BOSS
-
-        Boss_bullet_hit_list = pygame.sprite.groupcollide(self.bullet_list, self.boss_list,True, False)
-        for foo in Boss_bullet_hit_list:
-            BossHitCounter = BossHitCounter + 1
-        if BossHitCounter >=10:
-            self.player.score = self.player.score + 20
-            BossHitCounter = 0
+        # -- check if bullet hits wall
 
         # -- check collectable collisions
         pygame.sprite.groupcollide(self.collectable_list,self.enemy_list, True, False)
@@ -340,11 +298,6 @@ class Game(object):
         if self.player.lives == 0:
             self.game_over = True
         self.all_sprites_list.update()
-        #boarders
-        if (self.player.rect.x <=0) or (self.player.rect.x >=1155):
-            self.player.player_set_speed_x(0)
-        if (self.player.rect.y <=0) or (self.player.rect.y >=635):
-            self.player.player_set_speed_y(0)
 #    def playerBulletUpdate(self,amount):
 #        self.amount = amount
 #        self.player.bullet_count = self.player.bullet_count + self.amount
@@ -560,8 +513,6 @@ def MainGame():
             game.spawnEnemies()
         if counter%1250 == 0:
             game.SpawnCollectable()
-        if counter %400 ==0:
-            game.spawnBoss()
     #End While - End of game loop
     pygame.quit()
 
